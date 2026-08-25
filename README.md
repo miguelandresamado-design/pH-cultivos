@@ -4,9 +4,11 @@ Aplicación web progresiva (PWA) para interpretar lecturas de pH según el culti
 
 ## Estado actual
 
-La versión 3.2 está publicada con GitHub Pages y funciona en iPhone desde Safari. La navegación usa una estrategia de red primero y caché como respaldo para evitar mostrar versiones antiguas cuando hay conexión.
+La versión 3.3 está publicada con GitHub Pages y funciona en iPhone desde Safari. La navegación usa una estrategia de red primero y caché como respaldo para evitar mostrar versiones antiguas cuando hay conexión.
 
 La interpretación utiliza una barra continua con transición gradual de rojo para pH bajo, verde para el rango adecuado y azul para pH alto. El marcador conserva la posición proporcional de la lectura dentro de la escala específica de cada cultivo.
+
+Las mediciones pueden guardarse localmente con cultivo, valor de pH, categoría, fecha, hora y fuente de lectura. El historial utiliza una estructura versionada en el almacenamiento del navegador y permite eliminar registros individuales.
 
 Sitio publicado:
 
@@ -111,4 +113,6 @@ Para continuar el desarrollo en otro chat, basta con indicar:
 - Banano implementado: sí
 - Selector de cultivo: sí
 - Escala cualitativa de cinco niveles: sí
+- Guardado local e historial: sí
+- Ubicación, finca y lote: pendiente
 - Bluetooth: pendiente
