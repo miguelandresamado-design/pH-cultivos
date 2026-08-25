@@ -4,7 +4,9 @@ Aplicación web progresiva (PWA) para interpretar lecturas de pH según el culti
 
 ## Estado actual
 
-La versión 3.1 está publicada con GitHub Pages y funciona en iPhone desde Safari. La navegación usa una estrategia de red primero y caché como respaldo para evitar mostrar versiones antiguas cuando hay conexión.
+La versión 3.2 está publicada con GitHub Pages y funciona en iPhone desde Safari. La navegación usa una estrategia de red primero y caché como respaldo para evitar mostrar versiones antiguas cuando hay conexión.
+
+La interpretación utiliza una barra continua con transición gradual de rojo para pH bajo, verde para el rango adecuado y azul para pH alto. El marcador conserva la posición proporcional de la lectura dentro de la escala específica de cada cultivo.
 
 Sitio publicado:
 
