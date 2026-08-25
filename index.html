@@ -16,17 +16,19 @@
     .eyebrow{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#778077;font-weight:700;margin-bottom:6px}
     h1{margin:0;font-size:30px}.subtitle{margin:6px 0 24px;color:#697269}
     label{display:block;margin-bottom:8px;font-weight:750}
-    input{width:100%;padding:16px;border:1px solid #ccd4cc;border-radius:14px;font-size:24px;background:#fff;color:#162016}
+    select,input{width:100%;padding:16px;border:1px solid #ccd4cc;border-radius:14px;font-size:20px;background:#fff;color:#162016}
+    select{margin-bottom:20px;appearance:none;background-image:linear-gradient(45deg,transparent 50%,#253b28 50%),linear-gradient(135deg,#253b28 50%,transparent 50%);background-position:calc(100% - 21px) 50%,calc(100% - 15px) 50%;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
+    input{font-size:24px}
     button{width:100%;margin-top:14px;padding:16px;border:0;border-radius:14px;font-size:18px;font-weight:800;background:#253b28;color:#fff;cursor:pointer;touch-action:manipulation}
     .result{display:none;margin-top:26px;border-top:1px solid #e7ebe7;padding-top:24px}
     .value{text-align:center;font-size:58px;line-height:1;font-weight:850}.unit{text-align:center;color:#758075;margin-top:4px;font-size:14px}
     .status{margin:14px auto 22px;width:fit-content;padding:10px 22px;border-radius:999px;font-weight:850;letter-spacing:.04em}
     .low{background:#d9edff;color:#15517c}.medium{background:#e2f2de;color:#2f6b2f}.high{background:#ffe2dc;color:#8a2e20}
-    .scale{position:relative;margin-top:18px;padding-top:13px}.bar{height:24px;border-radius:999px;overflow:hidden;display:grid;grid-template-columns:5fr 1fr 8fr}
+    .scale{position:relative;margin-top:18px;padding-top:13px}.bar{height:24px;border-radius:999px;overflow:hidden;display:grid}
     .seg-low{background:#a7d8ff}.seg-medium{background:#9bd28f}.seg-high{background:#f4a297}
     .marker{position:absolute;top:0;width:4px;height:50px;background:#111;border-radius:3px;transform:translateX(-50%);transition:left .25s ease;pointer-events:none}
     .marker:before{content:"";position:absolute;top:-1px;left:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#111;border-radius:50%}
-    .labels{display:flex;justify-content:space-between;margin-top:8px;color:#758075;font-size:12px}
+    .labels{position:relative;height:18px;margin-top:8px;color:#758075;font-size:12px}.labels span{position:absolute;transform:translateX(-50%)}.labels span:first-child{left:0;transform:none}.labels span:last-child{right:0;transform:none}
     .message{margin-top:18px;padding:14px 16px;border-radius:14px;background:#fafbfa;border:1px solid #e6eae6;line-height:1.5}
     .ranges{margin-top:18px;background:#f5f7f5;border-radius:16px;padding:16px;line-height:1.7;font-size:15px}
     .foot{text-align:center;margin-top:16px;color:#818981;font-size:12px}
@@ -36,8 +38,13 @@
 <div class="wrap">
   <main class="app">
     <div class="eyebrow">Cultivo</div>
-    <h1>Café</h1>
+    <h1 id="crop-title">Café</h1>
     <p class="subtitle">Interpretador básico de pH</p>
+    <label for="crop">Seleccionar cultivo</label>
+    <select id="crop">
+      <option value="cafe">Café</option>
+      <option value="banano">Banano</option>
+    </select>
     <label for="ph">pH medido</label>
     <input id="ph" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 5,6">
     <button id="interpretar" type="button">Interpretar lectura</button>
@@ -46,40 +53,65 @@
       <div class="unit">pH</div>
       <div id="status" class="status medium">MEDIO</div>
       <div class="scale">
-        <div class="bar"><div class="seg-low"></div><div class="seg-medium"></div><div class="seg-high"></div></div>
+        <div id="bar" class="bar"><div class="seg-low"></div><div class="seg-medium"></div><div class="seg-high"></div></div>
         <div class="marker" id="marker"></div>
-        <div class="labels"><span>0</span><span>5.0</span><span>6.0</span><span>14</span></div>
+        <div class="labels"><span>0</span><span id="low-limit"></span><span id="high-limit"></span><span>14</span></div>
       </div>
       <div id="message" class="message"></div>
-      <div class="ranges">
-        <div><strong>BAJO:</strong> menor de 5.0</div>
-        <div><strong>MEDIO:</strong> de 5.0 a 6.0</div>
-        <div><strong>ALTO:</strong> mayor de 6.0</div>
-      </div>
+      <div id="ranges" class="ranges"></div>
     </section>
   </main>
-  <div class="foot">Versión inicial · Café · Lectura manual</div>
+  <div class="foot">Versión 2 · Café y Banano · Lectura manual</div>
 </div>
 <script>
 (function(){
+  const crops={
+    cafe:{name:'Café',low:5,high:6},
+    banano:{name:'Banano',low:5.5,high:6.5}
+  };
+  const cropSelect=document.getElementById('crop');
+  const cropTitle=document.getElementById('crop-title');
   const input=document.getElementById('ph');
   const button=document.getElementById('interpretar');
   const result=document.getElementById('result');
   const value=document.getElementById('value');
   const status=document.getElementById('status');
+  const bar=document.getElementById('bar');
   const marker=document.getElementById('marker');
+  const lowLimit=document.getElementById('low-limit');
+  const highLimit=document.getElementById('high-limit');
   const message=document.getElementById('message');
+  const ranges=document.getElementById('ranges');
+
+  function displayNumber(number){return number.toFixed(1).replace('.',',');}
+
+  function updateCrop(){
+    const crop=crops[cropSelect.value];
+    cropTitle.textContent=crop.name;
+    bar.style.gridTemplateColumns=`${crop.low}fr ${crop.high-crop.low}fr ${14-crop.high}fr`;
+    lowLimit.textContent=displayNumber(crop.low);
+    lowLimit.style.left=(crop.low/14*100)+'%';
+    highLimit.textContent=displayNumber(crop.high);
+    highLimit.style.left=(crop.high/14*100)+'%';
+    ranges.innerHTML=`<div><strong>BAJO:</strong> menor de ${displayNumber(crop.low)}</div><div><strong>MEDIO:</strong> de ${displayNumber(crop.low)} a ${displayNumber(crop.high)}</div><div><strong>ALTO:</strong> mayor de ${displayNumber(crop.high)}</div>`;
+    result.style.display='none';
+  }
+
   function interpretar(){
     const ph=Number(String(input.value).trim().replace(',','.'));
     if(!Number.isFinite(ph)||ph<0||ph>14){alert('Ingrese un valor de pH válido entre 0 y 14.');input.focus();return;}
+    const crop=crops[cropSelect.value];
     value.textContent=ph.toFixed(1);status.className='status';
-    if(ph<5){status.textContent='BAJO';status.classList.add('low');message.textContent='El pH está por debajo del rango medio definido para Café.';}
-    else if(ph<=6){status.textContent='MEDIO';status.classList.add('medium');message.textContent='El pH se encuentra dentro del rango medio definido para Café.';}
-    else{status.textContent='ALTO';status.classList.add('high');message.textContent='El pH está por encima del rango medio definido para Café.';}
+    if(ph<crop.low){status.textContent='BAJO';status.classList.add('low');message.textContent=`El pH está por debajo del rango medio definido para ${crop.name}.`;}
+    else if(ph<=crop.high){status.textContent='MEDIO';status.classList.add('medium');message.textContent=`El pH se encuentra dentro del rango medio definido para ${crop.name}.`;}
+    else{status.textContent='ALTO';status.classList.add('high');message.textContent=`El pH está por encima del rango medio definido para ${crop.name}.`;}
     marker.style.left=Math.max(0,Math.min(100,(ph/14)*100))+'%';result.style.display='block';
   }
+
+  cropSelect.addEventListener('change',updateCrop);
   button.addEventListener('click',interpretar);
   input.addEventListener('keydown',e=>{if(e.key==='Enter')interpretar();});
+  updateCrop();
   if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
 })();
 </script>
