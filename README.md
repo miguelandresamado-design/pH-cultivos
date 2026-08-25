@@ -4,11 +4,11 @@ Aplicación web progresiva (PWA) para interpretar lecturas de pH según el culti
 
 ## Estado actual
 
-La versión 3.3 está publicada con GitHub Pages y funciona en iPhone desde Safari. La navegación usa una estrategia de red primero y caché como respaldo para evitar mostrar versiones antiguas cuando hay conexión.
+La versión 3.4 está publicada con GitHub Pages y funciona en iPhone desde Safari. La navegación usa una estrategia de red primero y caché como respaldo para evitar mostrar versiones antiguas cuando hay conexión.
 
 La interpretación utiliza una barra continua con transición gradual de rojo para pH bajo, verde para el rango adecuado y azul para pH alto. El marcador conserva la posición proporcional de la lectura dentro de la escala específica de cada cultivo.
 
-Las mediciones pueden guardarse localmente con cultivo, valor de pH, categoría, fecha, hora y fuente de lectura. El historial utiliza una estructura versionada en el almacenamiento del navegador y permite eliminar registros individuales.
+Las mediciones pueden guardarse localmente con cultivo, valor de pH, categoría, fecha, hora y fuente de lectura. Opcionalmente, el usuario puede solicitar la ubicación del teléfono y guardar latitud, longitud, precisión y hora de captura. El historial utiliza una estructura versionada en el almacenamiento del navegador, permite abrir la ubicación guardada en un mapa y eliminar registros individuales.
 
 Sitio publicado:
 
@@ -20,7 +20,7 @@ Repositorio:
 
 ## Cultivos implementados
 
-El usuario selecciona el cultivo, introduce manualmente una lectura de pH y la aplicación la clasifica gráficamente como BAJO, MEDIO o ALTO.
+El usuario selecciona el cultivo, introduce manualmente una lectura de pH y la aplicación la clasifica gráficamente en una escala cualitativa de cinco niveles.
 
 ### Reglas para Café — escala de cinco niveles
 
@@ -71,15 +71,18 @@ Flujo:
 
 ### Etapa 2 — Mejoras de uso
 
-Posibles funciones:
+Funciones incorporadas:
 
-- recomendaciones por rango
 - guardar mediciones
 - fecha y hora
 - historial
+- ubicación GPS opcional
+
+Siguientes mejoras posibles:
+
+- recomendaciones por rango
 - gráficas de evolución
 - finca / lote
-- ubicación GPS
 
 ### Etapa 3 — Bluetooth
 
@@ -95,13 +98,13 @@ Objetivo futuro:
 
 Antes de integrar Bluetooth será necesario identificar y validar el servicio y las características GATT utilizadas por el medidor.
 
-## Principio para futuras conversaciones con ChatGPT
+## Continuidad del proyecto
 
 Este README es la referencia principal del proyecto.
 
-Para continuar el desarrollo en otro chat, basta con indicar:
+Para continuar el desarrollo, el README y el historial del repositorio funcionan como referencia principal:
 
-> Lee el README de mi repositorio `miguelandresamado-design/pH-cultivos` y continuemos desde allí.
+`miguelandresamado-design/pH-cultivos`
 
 ## Estado al 25 de agosto de 2026
 
@@ -114,5 +117,6 @@ Para continuar el desarrollo en otro chat, basta con indicar:
 - Selector de cultivo: sí
 - Escala cualitativa de cinco niveles: sí
 - Guardado local e historial: sí
-- Ubicación, finca y lote: pendiente
+- Ubicación GPS opcional: sí
+- Finca y lote: pendiente
 - Bluetooth: pendiente
