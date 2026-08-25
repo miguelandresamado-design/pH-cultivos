@@ -22,13 +22,15 @@
     button{width:100%;margin-top:14px;padding:16px;border:0;border-radius:14px;font-size:18px;font-weight:800;background:#253b28;color:#fff;cursor:pointer;touch-action:manipulation}
     .result{display:none;margin-top:26px;border-top:1px solid #e7ebe7;padding-top:24px}
     .value{text-align:center;font-size:58px;line-height:1;font-weight:850}.unit{text-align:center;color:#758075;margin-top:4px;font-size:14px}
-    .status{margin:14px auto 22px;width:fit-content;padding:10px 22px;border-radius:999px;font-weight:850;letter-spacing:.04em}
-    .low{background:#d9edff;color:#15517c}.medium{background:#e2f2de;color:#2f6b2f}.high{background:#ffe2dc;color:#8a2e20}
-    .scale{position:relative;margin-top:18px;padding-top:13px}.bar{height:24px;border-radius:999px;overflow:hidden;display:grid}
-    .seg-low{background:#a7d8ff}.seg-medium{background:#9bd28f}.seg-high{background:#f4a297}
+    .status{margin:14px auto 22px;width:fit-content;padding:10px 22px;border-radius:999px;font-weight:850;letter-spacing:.04em;text-align:center}
+    .very-low{background:#a71920;color:#fff}.low{background:#ffd7d1;color:#8a241b}.adequate{background:#dff1da;color:#27652b}.moderately-high{background:#dce8ff;color:#204f98}.high{background:#173b91;color:#fff}
+    .scale{position:relative;margin-top:18px;padding-top:13px}.bar{height:28px;border-radius:999px;overflow:hidden;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:#fff}
+    .scale-segment{transition:filter .2s ease,transform .2s ease;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+    .scale-segment.active{filter:brightness(1.08);box-shadow:inset 0 0 0 3px #111}
+    .seg-very-low{background:#b5121b}.seg-low{background:#ef5d50}.seg-adequate{background:#83c878}.seg-moderately-high{background:#6f9fee}.seg-high{background:#183895}
     .marker{position:absolute;top:0;width:4px;height:50px;background:#111;border-radius:3px;transform:translateX(-50%);transition:left .25s ease;pointer-events:none}
     .marker:before{content:"";position:absolute;top:-1px;left:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#111;border-radius:50%}
-    .labels{position:relative;height:18px;margin-top:8px;color:#758075;font-size:12px}.labels span{position:absolute;transform:translateX(-50%)}.labels span:first-child{left:0;transform:none}.labels span:last-child{right:0;transform:none}
+    .labels{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:9px;color:#667066;font-size:9px;font-weight:750;text-align:center;line-height:1.15}.labels span{min-width:0}
     .message{margin-top:18px;padding:14px 16px;border-radius:14px;background:#fafbfa;border:1px solid #e6eae6;line-height:1.5}
     .ranges{margin-top:18px;background:#f5f7f5;border-radius:16px;padding:16px;line-height:1.7;font-size:15px}
     .foot{text-align:center;margin-top:16px;color:#818981;font-size:12px}
@@ -51,23 +53,48 @@
     <section id="result" class="result" aria-live="polite">
       <div id="value" class="value">5.6</div>
       <div class="unit">pH</div>
-      <div id="status" class="status medium">MEDIO</div>
+      <div id="status" class="status adequate">ADECUADO</div>
       <div class="scale">
-        <div id="bar" class="bar"><div class="seg-low"></div><div class="seg-medium"></div><div class="seg-high"></div></div>
+        <div id="bar" class="bar" aria-label="Escala cualitativa de pH">
+          <div class="scale-segment seg-very-low"></div>
+          <div class="scale-segment seg-low"></div>
+          <div class="scale-segment seg-adequate"></div>
+          <div class="scale-segment seg-moderately-high"></div>
+          <div class="scale-segment seg-high"></div>
+        </div>
         <div class="marker" id="marker"></div>
-        <div class="labels"><span>0</span><span id="low-limit"></span><span id="high-limit"></span><span>14</span></div>
+        <div class="labels"><span>MUY<br>BAJO</span><span>BAJO</span><span>ADECUADO</span><span>MOD.<br>ALTO</span><span>ALTO</span></div>
       </div>
       <div id="message" class="message"></div>
       <div id="ranges" class="ranges"></div>
     </section>
   </main>
-  <div class="foot">Versión 2 · Café y Banano · Lectura manual</div>
+  <div class="foot">Versión 3 · Café y Banano · Escala de 5 niveles</div>
 </div>
 <script>
 (function(){
   const crops={
-    cafe:{name:'Café',low:5,high:6},
-    banano:{name:'Banano',low:5.5,high:6.5}
+    cafe:{
+      name:'Café',
+      source:'Cenicafé',
+      bands:[
+        {max:4.5,label:'MUY BAJO',className:'very-low',description:'El pH indica una condición de acidez crítica para Café.'},
+        {max:5,label:'BAJO',className:'low',description:'El pH se encuentra por debajo del rango adecuado para Café.'},
+        {max:5.5,label:'ADECUADO',className:'adequate',description:'El pH se encuentra dentro del rango adecuado para Café.'},
+        {max:6,label:'MODERADAMENTE ALTO',className:'moderately-high',description:'El pH se encuentra por encima del rango adecuado para Café.'},
+        {max:Infinity,label:'ALTO',className:'high',description:'El pH se encuentra en el rango alto definido para Café.'}
+      ]
+    },
+    banano:{
+      name:'Banano',
+      bands:[
+        {max:5,label:'MUY BAJO',className:'very-low',description:'El pH indica una condición de acidez crítica para Banano.'},
+        {max:5.8,label:'BAJO',className:'low',description:'El pH se encuentra por debajo del rango adecuado para Banano.'},
+        {max:6.54,label:'ADECUADO',className:'adequate',description:'El pH se encuentra dentro del rango adecuado para Banano.'},
+        {max:7.3,label:'MODERADAMENTE ALTO',className:'moderately-high',description:'El pH se encuentra por encima del rango adecuado para Banano.'},
+        {max:Infinity,label:'ALTO',className:'high',description:'El pH se encuentra en el rango alto definido para Banano.'}
+      ]
+    }
   };
   const cropSelect=document.getElementById('crop');
   const cropTitle=document.getElementById('crop-title');
@@ -76,24 +103,27 @@
   const result=document.getElementById('result');
   const value=document.getElementById('value');
   const status=document.getElementById('status');
-  const bar=document.getElementById('bar');
   const marker=document.getElementById('marker');
-  const lowLimit=document.getElementById('low-limit');
-  const highLimit=document.getElementById('high-limit');
+  const scaleSegments=[...document.querySelectorAll('.scale-segment')];
   const message=document.getElementById('message');
   const ranges=document.getElementById('ranges');
 
-  function displayNumber(number){return number.toFixed(1).replace('.',',');}
+  function displayNumber(number){return number.toFixed(2).replace('.',',');}
+  function displayPh(number){return number.toLocaleString('es-CO',{minimumFractionDigits:1,maximumFractionDigits:2});}
+
+  function bandRange(crop,index){
+    const lower=index===0?null:crop.bands[index-1].max;
+    const upper=crop.bands[index].max;
+    if(lower===null)return `menor de ${displayNumber(upper)}`;
+    if(upper===Infinity)return `${displayNumber(lower)} o mayor`;
+    return `de ${displayNumber(lower)} a menos de ${displayNumber(upper)}`;
+  }
 
   function updateCrop(){
     const crop=crops[cropSelect.value];
     cropTitle.textContent=crop.name;
-    bar.style.gridTemplateColumns=`${crop.low}fr ${crop.high-crop.low}fr ${14-crop.high}fr`;
-    lowLimit.textContent=displayNumber(crop.low);
-    lowLimit.style.left=(crop.low/14*100)+'%';
-    highLimit.textContent=displayNumber(crop.high);
-    highLimit.style.left=(crop.high/14*100)+'%';
-    ranges.innerHTML=`<div><strong>BAJO:</strong> menor de ${displayNumber(crop.low)}</div><div><strong>MEDIO:</strong> de ${displayNumber(crop.low)} a ${displayNumber(crop.high)}</div><div><strong>ALTO:</strong> mayor de ${displayNumber(crop.high)}</div>`;
+    ranges.innerHTML=crop.bands.map((band,index)=>`<div><strong>${band.label}:</strong> ${bandRange(crop,index)}</div>`).join('');
+    scaleSegments.forEach(segment=>segment.classList.remove('active'));
     result.style.display='none';
   }
 
@@ -101,11 +131,12 @@
     const ph=Number(String(input.value).trim().replace(',','.'));
     if(!Number.isFinite(ph)||ph<0||ph>14){alert('Ingrese un valor de pH válido entre 0 y 14.');input.focus();return;}
     const crop=crops[cropSelect.value];
-    value.textContent=ph.toFixed(1);status.className='status';
-    if(ph<crop.low){status.textContent='BAJO';status.classList.add('low');message.textContent=`El pH está por debajo del rango medio definido para ${crop.name}.`;}
-    else if(ph<=crop.high){status.textContent='MEDIO';status.classList.add('medium');message.textContent=`El pH se encuentra dentro del rango medio definido para ${crop.name}.`;}
-    else{status.textContent='ALTO';status.classList.add('high');message.textContent=`El pH está por encima del rango medio definido para ${crop.name}.`;}
-    marker.style.left=Math.max(0,Math.min(100,(ph/14)*100))+'%';result.style.display='block';
+    const bandIndex=crop.bands.findIndex(band=>ph<band.max);
+    const band=crop.bands[bandIndex];
+    value.textContent=displayPh(ph);status.className='status';
+    status.textContent=band.label;status.classList.add(band.className);message.textContent=band.description;
+    scaleSegments.forEach((segment,index)=>segment.classList.toggle('active',index===bandIndex));
+    marker.style.left=((bandIndex+.5)/crop.bands.length*100)+'%';result.style.display='block';
   }
 
   cropSelect.addEventListener('change',updateCrop);
