@@ -4,7 +4,7 @@ Aplicación web progresiva (PWA) para interpretar lecturas de pH según el culti
 
 ## Estado actual
 
-La segunda versión funcional está publicada con GitHub Pages y funciona en iPhone desde Safari.
+La tercera versión funcional está publicada con GitHub Pages y funciona en iPhone desde Safari.
 
 Sitio publicado:
 
@@ -18,17 +18,23 @@ Repositorio:
 
 El usuario selecciona el cultivo, introduce manualmente una lectura de pH y la aplicación la clasifica gráficamente como BAJO, MEDIO o ALTO.
 
-### Reglas para Café
+### Reglas para Café — escala de cinco niveles
 
-- **BAJO:** pH < 5.0
-- **MEDIO:** pH entre 5.0 y 6.0, incluyendo ambos límites
-- **ALTO:** pH > 6.0
+- **MUY BAJO:** pH < 4.50
+- **BAJO:** pH entre 4.50 y menos de 5.00
+- **ADECUADO:** pH entre 5.00 y menos de 5.50
+- **MODERADAMENTE ALTO:** pH entre 5.50 y menos de 6.00
+- **ALTO:** pH igual o superior a 6.00
 
-### Reglas para Banano
+Fuente de rangos: Cenicafé.
 
-- **BAJO:** pH < 5.5
-- **MEDIO:** pH entre 5.5 y 6.5, incluyendo ambos límites
-- **ALTO:** pH > 6.5
+### Reglas para Banano — escala de cinco niveles
+
+- **MUY BAJO:** pH < 5.00
+- **BAJO:** pH entre 5.00 y menos de 5.80
+- **ADECUADO:** pH entre 5.80 y menos de 6.54
+- **MODERADAMENTE ALTO:** pH entre 6.54 y menos de 7.30
+- **ALTO:** pH igual o superior a 7.30
 
 ## Tecnología actual
 
@@ -102,4 +108,5 @@ Para continuar el desarrollo en otro chat, basta con indicar:
 - Café implementado: sí
 - Banano implementado: sí
 - Selector de cultivo: sí
+- Escala cualitativa de cinco niveles: sí
 - Bluetooth: pendiente
