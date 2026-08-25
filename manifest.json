@@ -1,0 +1,10 @@
+{
+  "name": "pH Cultivos",
+  "short_name": "pH Cultivos",
+  "description": "Interpretador básico de pH por cultivo",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f4",
+  "theme_color": "#253b28"
+}
