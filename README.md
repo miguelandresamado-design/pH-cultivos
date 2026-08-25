@@ -4,7 +4,7 @@ Aplicación web progresiva (PWA) para interpretar lecturas de pH según el culti
 
 ## Estado actual
 
-La primera versión funcional ya está publicada con GitHub Pages y funciona en iPhone desde Safari.
+La segunda versión funcional está publicada con GitHub Pages y funciona en iPhone desde Safari.
 
 Sitio publicado:
 
@@ -14,27 +14,25 @@ Repositorio:
 
 `miguelandresamado-design/pH-cultivos`
 
-## Primera versión
+## Cultivos implementados
 
-Actualmente la app trabaja con un solo cultivo: **Café**.
+El usuario selecciona el cultivo, introduce manualmente una lectura de pH y la aplicación la clasifica gráficamente como BAJO, MEDIO o ALTO.
 
-El usuario introduce manualmente una lectura de pH y la aplicación la clasifica gráficamente como BAJO, MEDIO o ALTO.
-
-### Reglas actuales para Café
+### Reglas para Café
 
 - **BAJO:** pH < 5.0
 - **MEDIO:** pH entre 5.0 y 6.0, incluyendo ambos límites
 - **ALTO:** pH > 6.0
 
-Ejemplos:
+### Reglas para Banano
 
-- pH 4.8 → BAJO
-- pH 5.5 → MEDIO
-- pH 6.4 → ALTO
+- **BAJO:** pH < 5.5
+- **MEDIO:** pH entre 5.5 y 6.5, incluyendo ambos límites
+- **ALTO:** pH > 6.5
 
 ## Tecnología actual
 
-La versión inicial está construida como una PWA sencilla con:
+La aplicación está construida como una PWA sencilla con:
 
 - HTML
 - CSS
@@ -55,7 +53,7 @@ La interpretación agronómica debe basarse inicialmente en reglas y datos sumin
 
 ### Etapa 1 — Varios cultivos
 
-Agregar un selector de cultivo y una tabla de rangos específica para cada uno.
+Continuar agregando cultivos y sus rangos específicos.
 
 Flujo:
 
@@ -102,5 +100,6 @@ Para continuar el desarrollo en otro chat, basta con indicar:
 - Prueba en laptop: correcta
 - Prueba en Safari de iPhone: correcta
 - Café implementado: sí
-- Múltiples cultivos: pendiente
+- Banano implementado: sí
+- Selector de cultivo: sí
 - Bluetooth: pendiente
