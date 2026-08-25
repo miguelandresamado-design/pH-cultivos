@@ -31,10 +31,11 @@
     .labels{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:2px;color:#667066;font-size:9px;font-weight:750;text-align:center;line-height:1.15}.labels span{min-width:0}
     .message{margin-top:18px;padding:14px 16px;border-radius:14px;background:#fafbfa;border:1px solid #e6eae6;line-height:1.5}
     .ranges{margin-top:18px;background:#f5f7f5;border-radius:16px;padding:16px;line-height:1.7;font-size:15px}
+    .location-panel{margin-top:14px;padding:14px;border:1px solid #dce4dc;border-radius:14px;background:#fbfcfb}.location-button{margin:0;background:#fff;color:#253b28;border:1px solid #bfcbbf}.location-button:disabled{opacity:.6;cursor:default}.location-feedback{min-height:18px;margin-top:9px;color:#697269;font-size:13px;line-height:1.4}.location-feedback.success{color:#27703a}.location-feedback.error{color:#8a2e20}
     .save-button{background:#eef4ee;color:#253b28;border:1px solid #cfd9cf}.save-button:disabled{opacity:.55;cursor:default}
     .save-feedback{min-height:20px;margin-top:8px;text-align:center;color:#47704a;font-size:13px}
     .history{margin-top:22px;border-top:1px solid #e7ebe7;padding-top:18px}.history summary{cursor:pointer;font-weight:800;list-style:none;display:flex;justify-content:space-between;align-items:center}.history summary::-webkit-details-marker{display:none}.history-count{min-width:28px;padding:4px 9px;border-radius:999px;background:#edf1ed;text-align:center;font-size:13px}
-    .history-empty{padding:18px 0 4px;color:#758075;font-size:14px}.history-list{margin-top:12px}.history-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:13px 0;border-top:1px solid #edf0ed}.history-main{min-width:0}.history-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.history-ph{font-size:20px;font-weight:800}.history-status{padding:4px 8px;border-radius:999px;font-size:10px;font-weight:850}.history-meta{margin-top:5px;color:#758075;font-size:12px}.delete-button{width:auto;margin:0;align-self:center;padding:8px 10px;border:1px solid #e2c6c2;background:#fff;color:#8a2e20;border-radius:10px;font-size:12px;font-weight:750}
+    .history-empty{padding:18px 0 4px;color:#758075;font-size:14px}.history-list{margin-top:12px}.history-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:13px 0;border-top:1px solid #edf0ed}.history-main{min-width:0}.history-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.history-ph{font-size:20px;font-weight:800}.history-status{padding:4px 8px;border-radius:999px;font-size:10px;font-weight:850}.history-meta{margin-top:5px;color:#758075;font-size:12px}.history-location{display:inline-block;margin-top:6px;color:#315f91;font-size:12px;font-weight:700;text-decoration:none}.history-location:focus,.history-location:hover{text-decoration:underline}.delete-button{width:auto;margin:0;align-self:center;padding:8px 10px;border:1px solid #e2c6c2;background:#fff;color:#8a2e20;border-radius:10px;font-size:12px;font-weight:750}
     .foot{text-align:center;margin-top:16px;color:#818981;font-size:12px}
   </style>
 </head>
@@ -64,6 +65,10 @@
       </div>
       <div id="message" class="message"></div>
       <div id="ranges" class="ranges"></div>
+      <div class="location-panel">
+        <button id="add-location" class="location-button" type="button">Agregar ubicación</button>
+        <div id="location-feedback" class="location-feedback" aria-live="polite">Opcional. El permiso se solicitará únicamente al pulsar el botón.</div>
+      </div>
       <button id="save-measurement" class="save-button" type="button">Guardar medición</button>
       <div id="save-feedback" class="save-feedback" aria-live="polite"></div>
     </section>
@@ -73,7 +78,7 @@
       <div id="history-list" class="history-list"></div>
     </details>
   </main>
-  <div class="foot">Versión 3.3 · Historial local · Lectura manual</div>
+  <div class="foot">Versión 3.4 · Ubicación opcional · Lectura manual</div>
 </div>
 <script>
 (function(){
@@ -115,6 +120,8 @@
   const scaleTicks=document.getElementById('scale-ticks');
   const message=document.getElementById('message');
   const ranges=document.getElementById('ranges');
+  const locationButton=document.getElementById('add-location');
+  const locationFeedback=document.getElementById('location-feedback');
   const saveButton=document.getElementById('save-measurement');
   const saveFeedback=document.getElementById('save-feedback');
   const historyPanel=document.getElementById('history');
@@ -123,6 +130,7 @@
   const historyList=document.getElementById('history-list');
   const STORE_KEY='ph-cultivos.measurements.v1';
   let currentMeasurement=null;
+  let currentLocation=null;
   let measurements=[];
 
   function displayNumber(number){return number.toFixed(2).replace('.',',');}
@@ -157,6 +165,63 @@
     return Number.isNaN(date.getTime())?'Fecha no disponible':new Intl.DateTimeFormat('es-CO',{dateStyle:'short',timeStyle:'short'}).format(date);
   }
 
+  function validLocation(location){
+    return location&&Number.isFinite(location.latitude)&&Number.isFinite(location.longitude);
+  }
+
+  function resetLocation(){
+    currentLocation=null;
+    locationFeedback.className='location-feedback';
+    if(!('geolocation' in navigator)){
+      locationButton.disabled=true;
+      locationButton.textContent='Ubicación no disponible';
+      locationFeedback.textContent='Este dispositivo no permite obtener la ubicación. Puedes guardar sin ella.';
+      return;
+    }
+    locationButton.disabled=false;
+    locationButton.textContent='Agregar ubicación';
+    locationFeedback.textContent='Opcional. El permiso se solicitará únicamente al pulsar el botón.';
+  }
+
+  function locationErrorMessage(error){
+    if(error&&error.code===1)return 'Permiso de ubicación no concedido. Puedes guardar sin ubicación.';
+    if(error&&error.code===2)return 'No fue posible determinar la ubicación. Intenta nuevamente al aire libre.';
+    if(error&&error.code===3)return 'La ubicación tardó demasiado. Puedes intentarlo nuevamente.';
+    return 'No fue posible obtener la ubicación. Puedes guardar sin ella.';
+  }
+
+  function captureLocation(){
+    if(!currentMeasurement||!('geolocation' in navigator))return;
+    const requestedMeasurement=currentMeasurement;
+    locationButton.disabled=true;
+    locationButton.textContent='Obteniendo ubicación…';
+    locationFeedback.className='location-feedback';
+    locationFeedback.textContent='Esperando la ubicación del teléfono.';
+    saveButton.disabled=true;
+    navigator.geolocation.getCurrentPosition(position=>{
+      if(currentMeasurement!==requestedMeasurement)return;
+      currentLocation={
+        latitude:position.coords.latitude,
+        longitude:position.coords.longitude,
+        accuracy:position.coords.accuracy,
+        capturedAt:new Date().toISOString()
+      };
+      locationButton.disabled=false;
+      locationButton.textContent='Actualizar ubicación';
+      locationFeedback.className='location-feedback success';
+      locationFeedback.textContent=`Ubicación agregada · precisión aproximada ±${Math.round(currentLocation.accuracy)} m.`;
+      saveButton.disabled=false;
+    },error=>{
+      if(currentMeasurement!==requestedMeasurement)return;
+      currentLocation=null;
+      locationButton.disabled=false;
+      locationButton.textContent='Intentar ubicación nuevamente';
+      locationFeedback.className='location-feedback error';
+      locationFeedback.textContent=locationErrorMessage(error);
+      saveButton.disabled=false;
+    },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+  }
+
   function renderHistory(){
     historyCount.textContent=String(measurements.length);
     historyEmpty.style.display=measurements.length?'none':'block';
@@ -177,6 +242,16 @@
       const meta=document.createElement('div');
       meta.className='history-meta';
       meta.textContent=`${measurement.cropName} · ${formatDate(measurement.recordedAt)}`;
+      let locationLink=null;
+      if(validLocation(measurement.location)){
+        locationLink=document.createElement('a');
+        locationLink.className='history-location';
+        locationLink.target='_blank';
+        locationLink.rel='noopener';
+        locationLink.href=`https://www.google.com/maps/search/?api=1&query=${measurement.location.latitude},${measurement.location.longitude}`;
+        const accuracy=Number.isFinite(measurement.location.accuracy)?` · ±${Math.round(measurement.location.accuracy)} m`:'';
+        locationLink.textContent=`Ver ubicación${accuracy}`;
+      }
       const deleteButton=document.createElement('button');
       deleteButton.type='button';
       deleteButton.className='delete-button';
@@ -185,6 +260,7 @@
       deleteButton.addEventListener('click',()=>deleteMeasurement(measurement.id));
       line.append(ph,category);
       main.append(line,meta);
+      if(locationLink)main.appendChild(locationLink);
       item.append(main,deleteButton);
       historyList.appendChild(item);
     });
@@ -192,17 +268,21 @@
 
   function saveMeasurement(){
     if(!currentMeasurement)return;
-    const measurement={...currentMeasurement,id:recordId(),recordedAt:new Date().toISOString(),source:'manual'};
+    const measurement={...currentMeasurement,id:recordId(),recordedAt:new Date().toISOString(),source:'manual',location:validLocation(currentLocation)?{...currentLocation}:null};
     try{
       measurements.unshift(measurement);
       persistMeasurements();
       renderHistory();
       saveButton.disabled=true;
       saveButton.textContent='Medición guardada';
-      saveFeedback.textContent='Guardada localmente en este dispositivo.';
+      locationButton.disabled=true;
+      saveFeedback.textContent=measurement.location?'Guardada localmente con ubicación.':'Guardada localmente sin ubicación.';
       historyPanel.open=true;
     }catch(error){
       measurements.shift();
+      saveButton.disabled=false;
+      saveButton.textContent='Guardar medición';
+      locationButton.disabled=false;
       alert('No fue posible guardar la medición en este dispositivo.');
     }
   }
@@ -227,6 +307,7 @@
       scaleTicks.appendChild(tick);
     });
     currentMeasurement=null;
+    resetLocation();
     saveButton.disabled=false;
     saveButton.textContent='Guardar medición';
     saveFeedback.textContent='';
@@ -242,6 +323,7 @@
     value.textContent=displayPh(ph);status.className='status';
     status.textContent=band.label;status.classList.add(band.className);message.textContent=band.description;
     currentMeasurement={cropId:cropSelect.value,cropName:crop.name,ph,category:band.label,className:band.className};
+    resetLocation();
     saveButton.disabled=false;
     saveButton.textContent='Guardar medición';
     saveFeedback.textContent='';
@@ -250,9 +332,10 @@
 
   cropSelect.addEventListener('change',updateCrop);
   button.addEventListener('click',interpretar);
+  locationButton.addEventListener('click',captureLocation);
   saveButton.addEventListener('click',saveMeasurement);
   input.addEventListener('keydown',e=>{if(e.key==='Enter')interpretar();});
-  input.addEventListener('input',()=>{currentMeasurement=null;result.style.display='none';});
+  input.addEventListener('input',()=>{currentMeasurement=null;resetLocation();result.style.display='none';});
   loadMeasurements();
   renderHistory();
   updateCrop();
