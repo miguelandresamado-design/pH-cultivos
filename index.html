@@ -69,7 +69,7 @@
       <div id="ranges" class="ranges"></div>
     </section>
   </main>
-  <div class="foot">Versión 3 · Café y Banano · Escala de 5 niveles</div>
+  <div class="foot">Versión 3.1 · Café y Banano · Escala de 5 niveles</div>
 </div>
 <script>
 (function(){
@@ -143,7 +143,7 @@
   button.addEventListener('click',interpretar);
   input.addEventListener('keydown',e=>{if(e.key==='Enter')interpretar();});
   updateCrop();
-  if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
+  if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').then(registration=>registration.update()).catch(()=>{}));}
 })();
 </script>
 </body>
