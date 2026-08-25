@@ -4,7 +4,7 @@ Aplicación web progresiva (PWA) para interpretar lecturas de pH según el culti
 
 ## Estado actual
 
-La tercera versión funcional está publicada con GitHub Pages y funciona en iPhone desde Safari.
+La versión 3.1 está publicada con GitHub Pages y funciona en iPhone desde Safari. La navegación usa una estrategia de red primero y caché como respaldo para evitar mostrar versiones antiguas cuando hay conexión.
 
 Sitio publicado:
 
