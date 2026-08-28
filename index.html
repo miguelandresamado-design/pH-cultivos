@@ -31,6 +31,7 @@
     .labels{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:2px;color:#667066;font-size:9px;font-weight:750;text-align:center;line-height:1.15}.labels span{min-width:0}
     .message{margin-top:18px;padding:14px 16px;border-radius:14px;background:#fafbfa;border:1px solid #e6eae6;line-height:1.5}
     .ranges{margin-top:18px;background:#f5f7f5;border-radius:16px;padding:16px;line-height:1.7;font-size:15px}
+    .bluetooth-panel{margin:0 0 22px;padding:16px;border:1px solid #d8e3dc;border-radius:18px;background:#f7faf8}.bluetooth-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.bluetooth-head h2{margin:0;font-size:19px}.bluetooth-badge{flex:none;padding:6px 9px;border-radius:999px;background:#e8ece9;color:#5d675f;font-size:11px;font-weight:800}.bluetooth-badge.connected{background:#d9f0df;color:#216437}.bluetooth-status{margin:10px 0 0;color:#606b62;font-size:13px;line-height:1.45}.bluetooth-live{margin-top:13px;padding:12px 14px;border-radius:13px;background:#fff;border:1px solid #dbe4dd}.bluetooth-live-label{color:#758075;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.bluetooth-live-value{margin-top:3px;font-size:22px;font-weight:850}.bluetooth-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.bluetooth-actions button{margin:0;padding:12px 9px;font-size:14px}.bluetooth-secondary{background:#fff;color:#253b28;border:1px solid #bdc9bf}.bluetooth-use{margin-top:9px!important;background:#e6f1e8!important;color:#253b28!important;border:1px solid #bfd0c1!important}.bluetooth-actions button:disabled,.bluetooth-use:disabled{opacity:.55;cursor:default}
     .location-panel{margin-top:14px;padding:14px;border:1px solid #dce4dc;border-radius:14px;background:#fbfcfb}.location-button{margin:0;background:#fff;color:#253b28;border:1px solid #bfcbbf}.location-button:disabled{opacity:.6;cursor:default}.location-feedback{min-height:18px;margin-top:9px;color:#697269;font-size:13px;line-height:1.4}.location-feedback.success{color:#27703a}.location-feedback.error{color:#8a2e20}
     .save-button{background:#eef4ee;color:#253b28;border:1px solid #cfd9cf}.save-button:disabled{opacity:.55;cursor:default}
     .save-feedback{min-height:20px;margin-top:8px;text-align:center;color:#47704a;font-size:13px}
@@ -45,6 +46,22 @@
     <div class="eyebrow">Cultivo</div>
     <h1 id="crop-title">Café</h1>
     <p class="subtitle">Interpretador básico de pH</p>
+    <section class="bluetooth-panel" aria-labelledby="bluetooth-title">
+      <div class="bluetooth-head">
+        <div><div class="eyebrow">Equipo</div><h2 id="bluetooth-title">Medidor Bluetooth</h2></div>
+        <span id="bluetooth-badge" class="bluetooth-badge">No conectado</span>
+      </div>
+      <p id="bluetooth-status" class="bluetooth-status" aria-live="polite">Comprobando compatibilidad del teléfono…</p>
+      <div id="bluetooth-live" class="bluetooth-live" hidden>
+        <div class="bluetooth-live-label">Última lectura recibida</div>
+        <div id="bluetooth-live-value" class="bluetooth-live-value">—</div>
+        <button id="use-bluetooth-reading" class="bluetooth-use" type="button">Usar esta lectura</button>
+      </div>
+      <div class="bluetooth-actions">
+        <button id="connect-bluetooth" type="button">Conectar YK-S01</button>
+        <button id="disconnect-bluetooth" class="bluetooth-secondary" type="button" disabled>Desconectar</button>
+      </div>
+    </section>
     <label for="crop">Seleccionar cultivo</label>
     <select id="crop">
       <option value="cafe">Café</option>
@@ -78,7 +95,7 @@
       <div id="history-list" class="history-list"></div>
     </details>
   </main>
-  <div class="foot">Versión 3.4 · Ubicación opcional · Lectura manual</div>
+  <div class="foot">Versión 3.5 · Bluetooth YK-S01 · Lectura manual</div>
 </div>
 <script>
 (function(){
@@ -128,10 +145,22 @@
   const historyCount=document.getElementById('history-count');
   const historyEmpty=document.getElementById('history-empty');
   const historyList=document.getElementById('history-list');
+  const bluetoothBadge=document.getElementById('bluetooth-badge');
+  const bluetoothStatus=document.getElementById('bluetooth-status');
+  const bluetoothLive=document.getElementById('bluetooth-live');
+  const bluetoothLiveValue=document.getElementById('bluetooth-live-value');
+  const connectBluetoothButton=document.getElementById('connect-bluetooth');
+  const disconnectBluetoothButton=document.getElementById('disconnect-bluetooth');
+  const useBluetoothReadingButton=document.getElementById('use-bluetooth-reading');
   const STORE_KEY='ph-cultivos.measurements.v1';
+  const YINMIK_SERVICE='0000ff01-0000-1000-8000-00805f9b34fb';
+  const YINMIK_MEASUREMENT='0000ff02-0000-1000-8000-00805f9b34fb';
   let currentMeasurement=null;
   let currentLocation=null;
   let measurements=[];
+  let bluetoothDevice=null;
+  let bluetoothCharacteristic=null;
+  let latestBluetoothReading=null;
 
   function displayNumber(number){return number.toFixed(2).replace('.',',');}
   function displayPh(number){return number.toLocaleString('es-CO',{minimumFractionDigits:1,maximumFractionDigits:2});}
@@ -242,6 +271,11 @@
       const meta=document.createElement('div');
       meta.className='history-meta';
       meta.textContent=`${measurement.cropName} · ${formatDate(measurement.recordedAt)}`;
+      const source=document.createElement('div');
+      source.className='history-meta';
+      const sourceName=measurement.source==='bluetooth'?'Bluetooth YK-S01':'Lectura manual';
+      const temperature=Number.isFinite(measurement.temperatureC)?` · ${displayPh(measurement.temperatureC)} °C`:'';
+      source.textContent=sourceName+temperature;
       let locationLink=null;
       if(validLocation(measurement.location)){
         locationLink=document.createElement('a');
@@ -259,7 +293,7 @@
       deleteButton.setAttribute('aria-label',`Eliminar medición de ${measurement.cropName} con pH ${displayPh(measurement.ph)}`);
       deleteButton.addEventListener('click',()=>deleteMeasurement(measurement.id));
       line.append(ph,category);
-      main.append(line,meta);
+      main.append(line,meta,source);
       if(locationLink)main.appendChild(locationLink);
       item.append(main,deleteButton);
       historyList.appendChild(item);
@@ -268,7 +302,7 @@
 
   function saveMeasurement(){
     if(!currentMeasurement)return;
-    const measurement={...currentMeasurement,id:recordId(),recordedAt:new Date().toISOString(),source:'manual',location:validLocation(currentLocation)?{...currentLocation}:null};
+    const measurement={...currentMeasurement,id:recordId(),recordedAt:new Date().toISOString(),location:validLocation(currentLocation)?{...currentLocation}:null};
     try{
       measurements.unshift(measurement);
       persistMeasurements();
@@ -314,7 +348,7 @@
     result.style.display='none';
   }
 
-  function interpretar(){
+  function interpretar(readingContext=null){
     const ph=Number(String(input.value).trim().replace(',','.'));
     if(!Number.isFinite(ph)||ph<0||ph>14){alert('Ingrese un valor de pH válido entre 0 y 14.');input.focus();return;}
     const crop=crops[cropSelect.value];
@@ -322,7 +356,17 @@
     const band=crop.bands[bandIndex];
     value.textContent=displayPh(ph);status.className='status';
     status.textContent=band.label;status.classList.add(band.className);message.textContent=band.description;
-    currentMeasurement={cropId:cropSelect.value,cropName:crop.name,ph,category:band.label,className:band.className};
+    currentMeasurement={
+      cropId:cropSelect.value,
+      cropName:crop.name,
+      ph,
+      category:band.label,
+      className:band.className,
+      source:readingContext&&readingContext.source==='bluetooth'?'bluetooth':'manual',
+      device:readingContext&&readingContext.device?readingContext.device:null,
+      temperatureC:readingContext&&Number.isFinite(readingContext.temperatureC)?readingContext.temperatureC:null,
+      rawPayload:readingContext&&readingContext.rawPayload?readingContext.rawPayload:null
+    };
     resetLocation();
     saveButton.disabled=false;
     saveButton.textContent='Guardar medición';
@@ -330,8 +374,125 @@
     marker.style.left=scalePosition(crop,ph)+'%';result.style.display='block';
   }
 
+  function decodeYinmikFrame(value){
+    const bytes=value instanceof DataView?Array.from({length:value.byteLength},(_,index)=>value.getUint8(index)):Array.from(value);
+    for(let index=bytes.length-1;index>0;index--){
+      const current=bytes[index];
+      const highCurrent=(current&0x55)<<1;
+      const lowCurrent=(current&0xaa)>>1;
+      const previous=bytes[index-1];
+      const highPrevious=(previous&0x55)<<1;
+      const lowPrevious=(previous&0xaa)>>1;
+      bytes[index]=0xff-(highCurrent|lowPrevious);
+      bytes[index-1]=0xff-(highPrevious|lowCurrent);
+    }
+    return bytes;
+  }
+
+  function readUnsigned16(bytes,index){return (bytes[index]<<8)|bytes[index+1];}
+  function readSigned16(bytes,index){const number=readUnsigned16(bytes,index);return number&0x8000?number-0x10000:number;}
+  function rawFrameHex(value){return Array.from({length:value.byteLength},(_,index)=>value.getUint8(index).toString(16).padStart(2,'0')).join('').toUpperCase();}
+
+  function receiveBluetoothReading(value){
+    if(!(value instanceof DataView)||value.byteLength!==45)return;
+    const decoded=decodeYinmikFrame(value);
+    if(decoded[0]!==0x01||decoded[1]!==0x02)return;
+    const ph=readUnsigned16(decoded,3)/10;
+    const temperatureC=readSigned16(decoded,13)/10;
+    if(!Number.isFinite(ph)||ph<0||ph>14||!Number.isFinite(temperatureC)||temperatureC<-20||temperatureC>80){
+      bluetoothStatus.textContent='Se recibió un paquete que aún no puede interpretarse como una lectura válida.';
+      return;
+    }
+    latestBluetoothReading={
+      ph,
+      temperatureC,
+      source:'bluetooth',
+      rawPayload:rawFrameHex(value),
+      device:{name:bluetoothDevice&&bluetoothDevice.name?bluetoothDevice.name:'YK-S01',serviceUuid:YINMIK_SERVICE,characteristicUuid:YINMIK_MEASUREMENT}
+    };
+    bluetoothLiveValue.textContent=`pH ${displayPh(ph)} · ${displayPh(temperatureC)} °C`;
+    bluetoothLive.hidden=false;
+    useBluetoothReadingButton.disabled=false;
+    bluetoothStatus.textContent='Lectura recibida. Pulsa “Usar esta lectura” para interpretarla en el cultivo seleccionado.';
+  }
+
+  function handleBluetoothNotification(event){receiveBluetoothReading(event.target.value);}
+
+  function setBluetoothConnected(connected){
+    bluetoothBadge.textContent=connected?'Conectado':'No conectado';
+    bluetoothBadge.classList.toggle('connected',connected);
+    connectBluetoothButton.disabled=connected;
+    disconnectBluetoothButton.disabled=!connected;
+  }
+
+  function handleBluetoothDisconnected(){
+    bluetoothCharacteristic=null;
+    setBluetoothConnected(false);
+    bluetoothStatus.textContent=latestBluetoothReading?'El medidor se desconectó. La última lectura recibida sigue disponible.':'El medidor se desconectó.';
+  }
+
+  function bluetoothErrorMessage(error){
+    if(error&&error.name==='NotFoundError')return 'No se seleccionó ningún medidor. Puedes intentarlo nuevamente.';
+    if(error&&error.name==='SecurityError')return 'El navegador bloqueó Bluetooth. Abre la app mediante HTTPS y revisa los permisos.';
+    if(error&&error.name==='NetworkError')return 'No fue posible iniciar las notificaciones del medidor. Apágalo, enciéndelo e intenta de nuevo.';
+    return 'No fue posible conectar el YK-S01. Verifica que esté encendido y cerca del teléfono.';
+  }
+
+  async function connectBluetooth(){
+    if(!('bluetooth' in navigator))return;
+    connectBluetoothButton.disabled=true;
+    bluetoothStatus.textContent='Selecciona el medidor YK-S01 en la ventana de Bluetooth…';
+    try{
+      bluetoothDevice=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'YK-S01'}],optionalServices:[YINMIK_SERVICE]});
+      bluetoothDevice.addEventListener('gattserverdisconnected',handleBluetoothDisconnected);
+      bluetoothStatus.textContent='Conectando con el medidor…';
+      const server=await bluetoothDevice.gatt.connect();
+      const service=await server.getPrimaryService(YINMIK_SERVICE);
+      bluetoothCharacteristic=await service.getCharacteristic(YINMIK_MEASUREMENT);
+      bluetoothCharacteristic.addEventListener('characteristicvaluechanged',handleBluetoothNotification);
+      await bluetoothCharacteristic.startNotifications();
+      setBluetoothConnected(true);
+      bluetoothStatus.textContent='Conectado. Esperando una lectura del medidor…';
+      try{receiveBluetoothReading(await bluetoothCharacteristic.readValue());}catch(error){}
+    }catch(error){
+      if(bluetoothDevice&&bluetoothDevice.gatt&&bluetoothDevice.gatt.connected)bluetoothDevice.gatt.disconnect();
+      bluetoothCharacteristic=null;
+      setBluetoothConnected(false);
+      bluetoothStatus.textContent=bluetoothErrorMessage(error);
+    }finally{
+      if(!bluetoothDevice||!bluetoothDevice.gatt||!bluetoothDevice.gatt.connected)connectBluetoothButton.disabled=false;
+    }
+  }
+
+  function disconnectBluetooth(){
+    if(bluetoothCharacteristic)bluetoothCharacteristic.removeEventListener('characteristicvaluechanged',handleBluetoothNotification);
+    if(bluetoothDevice&&bluetoothDevice.gatt&&bluetoothDevice.gatt.connected)bluetoothDevice.gatt.disconnect();
+    else handleBluetoothDisconnected();
+  }
+
+  function useBluetoothReading(){
+    if(!latestBluetoothReading)return;
+    input.value=displayPh(latestBluetoothReading.ph);
+    interpretar(latestBluetoothReading);
+    result.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  function initializeBluetooth(){
+    useBluetoothReadingButton.disabled=true;
+    if(!('bluetooth' in navigator)){
+      connectBluetoothButton.disabled=true;
+      disconnectBluetoothButton.disabled=true;
+      bluetoothStatus.textContent='La conexión directa está disponible en Chrome para Android. En iPhone puedes continuar usando la lectura manual mientras preparamos la versión nativa.';
+      return;
+    }
+    bluetoothStatus.textContent='Enciende el YK-S01 y pulsa conectar. El navegador solicitará elegir el equipo.';
+  }
+
   cropSelect.addEventListener('change',updateCrop);
-  button.addEventListener('click',interpretar);
+  button.addEventListener('click',()=>interpretar());
+  connectBluetoothButton.addEventListener('click',connectBluetooth);
+  disconnectBluetoothButton.addEventListener('click',disconnectBluetooth);
+  useBluetoothReadingButton.addEventListener('click',useBluetoothReading);
   locationButton.addEventListener('click',captureLocation);
   saveButton.addEventListener('click',saveMeasurement);
   input.addEventListener('keydown',e=>{if(e.key==='Enter')interpretar();});
@@ -339,6 +500,7 @@
   loadMeasurements();
   renderHistory();
   updateCrop();
+  initializeBluetooth();
   if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').then(registration=>registration.update()).catch(()=>{}));}
 })();
 </script>
