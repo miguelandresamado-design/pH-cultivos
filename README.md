@@ -4,11 +4,11 @@ Aplicación web progresiva (PWA) para interpretar lecturas de pH según el culti
 
 ## Estado actual
 
-La versión 3.4 está publicada con GitHub Pages y funciona en iPhone desde Safari. La navegación usa una estrategia de red primero y caché como respaldo para evitar mostrar versiones antiguas cuando hay conexión.
+La versión 3.5 está publicada con GitHub Pages. Funciona en iPhone desde Safari con lectura manual y en Chrome para Android incorpora la conexión directa experimental con el medidor YINMIK YK-S01. La navegación usa una estrategia de red primero y caché como respaldo para evitar mostrar versiones antiguas cuando hay conexión.
 
 La interpretación utiliza una barra continua con transición gradual de rojo para pH bajo, verde para el rango adecuado y azul para pH alto. El marcador conserva la posición proporcional de la lectura dentro de la escala específica de cada cultivo.
 
-Las mediciones pueden guardarse localmente con cultivo, valor de pH, categoría, fecha, hora y fuente de lectura. Opcionalmente, el usuario puede solicitar la ubicación del teléfono y guardar latitud, longitud, precisión y hora de captura. El historial utiliza una estructura versionada en el almacenamiento del navegador, permite abrir la ubicación guardada en un mapa y eliminar registros individuales.
+Las mediciones pueden guardarse localmente con cultivo, valor de pH, categoría, fecha, hora y fuente de lectura. Las lecturas recibidas por Bluetooth conservan también la temperatura y el paquete original para facilitar futuras migraciones. Opcionalmente, el usuario puede solicitar la ubicación del teléfono y guardar latitud, longitud, precisión y hora de captura. El historial utiliza una estructura versionada en el almacenamiento del navegador, permite abrir la ubicación guardada en un mapa y eliminar registros individuales.
 
 Sitio publicado:
 
@@ -86,17 +86,27 @@ Siguientes mejoras posibles:
 
 ### Etapa 3 — Bluetooth
 
-Integrar un medidor físico de pH mediante Bluetooth Low Energy (BLE).
+La primera integración real con un medidor físico mediante Bluetooth Low Energy (BLE) está implementada para Chrome en Android.
 
 Primer equipo considerado para pruebas:
 
-- **YINMIK YK-S01P**
+- **YINMIK YK-S01**
 
-Objetivo futuro:
+Flujo implementado:
 
-`Medidor YINMIK → Bluetooth BLE → pH Cultivos → interpretación automática`
+`Medidor YINMIK → Bluetooth BLE → lectura en vivo → confirmación → interpretación en pH Cultivos`
 
-Antes de integrar Bluetooth será necesario identificar y validar el servicio y las características GATT utilizadas por el medidor.
+Protocolo validado con el equipo físico:
+
+- nombre Bluetooth: `YK-S01`
+- servicio GATT: `FF01`
+- característica de medición: `FF02`
+- propiedades: lectura, escritura y notificación
+- pH y temperatura decodificados y contrastados con la pantalla del medidor
+
+La aplicación no guarda automáticamente cada notificación. Muestra la última lectura y el usuario pulsa **Usar esta lectura** antes de interpretarla o guardarla.
+
+Safari en iPhone no ofrece Web Bluetooth. La PWA mantiene allí todo el flujo manual; la conexión directa en iPhone requerirá una aplicación nativa o una envoltura híbrida que reutilice este mismo decodificador.
 
 ## Continuidad del proyecto
 
@@ -106,7 +116,7 @@ Para continuar el desarrollo, el README y el historial del repositorio funcionan
 
 `miguelandresamado-design/pH-cultivos`
 
-## Estado al 25 de agosto de 2026
+## Estado al 28 de agosto de 2026
 
 - Repositorio creado: sí
 - GitHub Pages activado: sí
@@ -119,4 +129,5 @@ Para continuar el desarrollo, el README y el historial del repositorio funcionan
 - Guardado local e historial: sí
 - Ubicación GPS opcional: sí
 - Finca y lote: pendiente
-- Bluetooth: pendiente
+- Bluetooth YK-S01 en Chrome para Android: implementado para prueba física
+- Bluetooth directo en iPhone: pendiente de envoltura nativa
